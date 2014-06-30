@@ -137,7 +137,10 @@ def loadData():
     for col in data:
         if col == None:
             continue
-        (client,firm,employs) = col        
+        (client,firm,employs) = col
+        if client["name"] == "":
+            continue
+        
         cnode = str(uuid.uuid1())
         fnode = str(uuid.uuid1())
         cbeing = str(uuid.uuid1())

@@ -29,6 +29,7 @@ def preProcess(s):
 #ad hoc informal coalitions
 
 useless = ["l l c","llc", "l c","lc", "l l p","llp", "l p","lp", "pllc",
+           "innc",
            "pllp",
            "incorperated", "ltd","l t d","company",
            "corporations",
@@ -37,6 +38,8 @@ useless = ["l l c","llc", "l c","lc", "l l p","llp", "l p","lp", "pllc",
 
 subs = {
     "assn" : "association",
+    "ass'n" : "association",
+    "nat'l" : "national",        
     "intl" : "international"
     }
 #processClientName(preProcess("assn of J.H.Christ & The-All-Mighty l c llc lp"))
@@ -81,6 +84,9 @@ def processClientName(org):
                 "capitol insight",
                 "dci group",
                 "dci group az",
+                "whitmer and worrall",
+                "mayer brown",
+                "fukuda gakuen usa"                 
     ]
     s = preProcess(s)
     for b in breakers:
@@ -127,6 +133,11 @@ def cleanCruft(s):
 splitters = ["fka:","fka","f/k/a","f/k/a/",
              "formerly known as",
              "formerly know as",
+             "frmly filed as",
+             "frmly registered as",             
+             "frmly",
+             "frly",                          
+             "frmly field",             
              "formerly filed as",
              "formerly reported as",                                  
              "formerly",
@@ -178,7 +189,7 @@ def splitName(s):
             ac = ac[1:-1]
         for w in words:
             if ac == w:
-                return [preProcess(w),preProcess(gs[0])]
+                return [preProcess(gs[0])]#don't include ac
         
     return [s]
 

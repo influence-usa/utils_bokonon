@@ -4,6 +4,9 @@ from pprint import pprint
 from save import steralize, save, project
 from text import extractNames
 
+def represent(v):
+    l1 = ", ".join([v["name"],v["address"],v["city"],v["state"]])
+    return l1
 def main():
     print("Loading universe...")
     universe = loadData()
@@ -18,11 +21,11 @@ def main():
                lambda v: extractNames(v["name"]),
                description="Merged clients based on extracted and cleaned name match")
 
-    p = matchTypeAndHasFields("client",["address","city","country","state","zip"])
-    groupMerge(universe,
-               lambda v: p(v) and v["state"] not in ["DC","VA","MD"] and v["city"] != "DC",
-               lambda v: [(v["address"],v["city"],v["country"],v["state"],v["zip"])],
-               description="Merging clients based on exact matching of address fields (sans DC area)")
+    # p = matchTypeAndHasFields("client",["address","city","country","state","zip"])
+    # groupMerge(universe,
+    #            lambda v: p(v) and v["state"] not in ["DC","VA","MD"] and v["city"] != "DC",
+    #            lambda v: [(v["address"],v["city"],v["country"],v["state"],v["zip"])],
+    #            description="Merging clients based on exact matching of address fields (sans DC area)")
             
     # groupMerge(universe,
     #            matchTypeAndHasFields("firm",["orgname"]),
@@ -34,9 +37,7 @@ def main():
     #            mnf("printedname"),               
     #            description="Merging firms based on *corrected* printedname")
         
-    project(universe,"clientnames.txt",
-            lambda v: v["type"] == "client",
-            lambda v: ", ".join([v["name"],v["address"],v["city"],v["country"],v["state"],v["zip"]]))
+    project(universe,"clientnames.txt", lambda v: v["type"] == "client", represent)
 
     
 if __name__ == "__main__":
