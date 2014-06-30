@@ -29,6 +29,10 @@ useless = ["l l c","llc", "l c","lc", "l l p","llp", "l p","lp", "pllc",
            "corps",
            "corporation","corp","companies","incorporated","inc"] 
 
+shortenings = {
+    "assn" : "association",
+    "intl" : "international"
+    }
 #processClientName(preProcess("assn of J.H.Christ & The-All-Mighty l c llc lp"))
 #'asociation of j h christ and the all mighty'
 # preprocess ("aia") out
@@ -42,8 +46,10 @@ def processClientName(org):
     s = re.sub('\\bu s a\\b','usa',s) #replace u.s.a. with usa
     s = re.sub('\\bu s\\b','us',s) #replace u.s.a. with usa
     s = re.sub('\\bu s\\b','na',s) #replace n a with na        
-    s = re.sub('\\bassn\\b','asociation',s) # replace "assn" with "association"
     s = re.sub('&',' and ',s)#replace "&" with " and "
+
+    for k,v in shortenings.iteritems():
+        s = re.sub("\\b"+k+"\\b",v,s)
         
     #remove various stopwords
     for sub in useless:

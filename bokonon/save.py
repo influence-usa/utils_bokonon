@@ -14,8 +14,8 @@ def steralize(universe):
 
 def save(universe):
     stamp = re.sub("[ :\.]","-",str(datetime.datetime.now()))[:-7]
-    f  = codecs.open("output-{}.graphml".format(stamp),"w",encoding="utf-8")
-    fn = codecs.open("fresh-output.graphml","w",encoding="utf-8")
+    f  = codecs.open("open/output-{}.graphml".format(stamp),"w",encoding="utf-8")
+    fn = codecs.open("open/fresh-output.graphml","w",encoding="utf-8")
     nx.write_graphml(universe,f)
     nx.write_graphml(universe,fn)    
     print("Saved in {}".format(f))
@@ -32,7 +32,7 @@ def project(universe,fo,pred,extract):
             lst.append(fs)
 
     print("Writing {} with {} groups".format(fo,len(lst)))
-    with codecs.open(fo,"w",encoding="utf-8") as f:        
+    with codecs.open("output/"+fo,"w",encoding="utf-8") as f:        
         for b in sorted(lst,key=lambda x:x[0].lower()):
             for el in b:
                 f.write(el)
