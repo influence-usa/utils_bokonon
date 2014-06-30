@@ -36,7 +36,7 @@ def main():
         
     project(universe,"clientnames.txt",
             lambda v: v["type"] == "client",
-            lambda v: ", ".join([v["name"],v["address"],v["city"],v["country"],v["state"],v["zip"]]).lower())
+            lambda v: ", ".join([v["name"],v["address"],v["city"],v["country"],v["state"],v["zip"]]))
 
     
 if __name__ == "__main__":

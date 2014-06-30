@@ -1,6 +1,12 @@
 import itertools
 import re 
 
+def mapcat(f,vs):
+    nvs = []
+    for v in map(f,vs):
+        nvs += v
+    return nvs
+    
 
 def replaceWhitespace(s):
     return re.sub('  +', ' ', s)
@@ -29,7 +35,7 @@ useless = ["l l c","llc", "l c","lc", "l l p","llp", "l p","lp", "pllc",
            "corps",
            "corporation","corp","companies","incorporated","inc"] 
 
-shortenings = {
+subs = {
     "assn" : "association",
     "intl" : "international"
     }
@@ -48,7 +54,7 @@ def processClientName(org):
     s = re.sub('\\bu s\\b','na',s) #replace n a with na        
     s = re.sub('&',' and ',s)#replace "&" with " and "
 
-    for k,v in shortenings.iteritems():
+    for k,v in subs.iteritems():
         s = re.sub("\\b"+k+"\\b",v,s)
         
     #remove various stopwords
@@ -59,7 +65,8 @@ def processClientName(org):
     #on behalf of cassidy & associates
     #on behalf of akin gump
     #"on behalf of akin gump strauss hauer & feld"
-    breakers = ["on behalf of", "obo","o/b/o", "on behalf",
+    breakers = ["on behalf of the", #return multiple values?
+                "on behalf of", "obo","o/b/o", "on behalf",
                 "public policy partners",
                 "the livingston group",                                                
                 "akin gump strauss hauer and feld"
@@ -82,8 +89,13 @@ def processClientName(org):
     for b in ["(for "]:
         if b in s and len(s) > len(b) + 4:
             s = re.split(re.escape(b),s)[-1]
+                                
+    s = re.sub('-',' ',s)
+    
+    return cleanCruft(preProcess(s))
+    
 
-            
+def cleanCruft(s):            
     old = None
     while old != s:
         s=preProcess(s)
@@ -110,39 +122,39 @@ def processClientName(org):
             
         while "(" == s[-1] and ")" not in s:
             s = s[:-1]
-                                
-    s = re.sub('-',' ',s)
-    
-    return preProcess(s)
-    
+    return s
 
-def splitName(name):
-    name = preProcess(name).lower()
-    if "\"fka\"" in name: # The "'s mess up the word boundaries 
-        return re.split("\"fka\"",name)
+splitters = ["fka:","fka","f/k/a","f/k/a/",
+             "formerly known as",
+             "formerly know as",
+             "formerly filed as",
+             "formerly reported as",                                  
+             "formerly",
+             "formally known as",
+             "also known as",                                  
+             "formally", 
+             "former", #united natural products alliance (former utah natural products alliance)?
+             "d/b/a",
+             "dba",
+             "name changed",
+             "name changed to",
+             "name changed from",                                                                  
+             "name change to",
+             "name change from",                                                   
+             "name change"]
+
+splitters = [re.compile("\\b"+sp+"\\b") for sp in splitters]
+
+#MYFAMILY.COM ***client has changed it's name to The Generations Networks
+def splitName(s):
+    s = cleanCruft(preProcess(s).lower())
+    if "\"fka\"" in s: # The "'s mess up the word boundaries 
+        return mapcat(splitName,re.split("\"fka\"",s))
     
-    splitters = ["fka:","fka","f/k/a","f/k/a/",
-                 "formerly known as",
-                 "formerly know as",
-                 "formerly filed as",
-                 "formerly reported as",                                  
-                 "formerly",
-                 "formally known as",
-                 "also known as",                                  
-                 "formally", 
-                 "former", #united natural products alliance (former utah natural products alliance)?
-                 "d/b/a",
-                 "dba",
-    ]#todo: compile regex ahead of times
-    for s in splitters:
-        if s in name and name != "dba international":
-            return re.split("\\b"+s+"\\b",name)
-
-    #remove acronyms
-    #greater richmond transit company (grtc) ==> greater richmond transit (grtc)
-    #housing action resource trust (hart) ==> housing action resource trust
-    #ousing action resource trust ("hart")
-
+    for c in splitters:
+        if re.search(c,s) != None and s != "dba international":
+            return mapcat(splitName,re.split(c,s))
+    
     g = re.match(r"([\w' ]*)\((.*)\)$",s)
     mappings = {
         "and":["a",""],
@@ -151,6 +163,7 @@ def splitName(name):
         "southwest":["s","sw"],
         "of":["o",""]
     }
+
     if g is not None:
         gs = g.groups()
         ws = []
@@ -160,11 +173,14 @@ def splitName(name):
             else:
                 ws.append([w[0]])
         words = map("".join,list(itertools.product(*ws)))
+        ac = gs[1]
+        if ac[0] == "\"" and ac[-1] == "\"":
+            ac = ac[1:-1]
         for w in words:
-            if gs[1] == w:
+            if ac == w:
                 return [preProcess(w),preProcess(gs[0])]
         
-    return [name]
+    return [s]
 
 def extractNames(s):
     return filter(lambda x: x !="", map(processClientName,splitName(s)))
