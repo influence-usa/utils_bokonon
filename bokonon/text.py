@@ -34,7 +34,9 @@ useless = ["l l c","llc", "l c","lc", "l l p","llp", "l p","lp", "pllc",
            "incorperated", "ltd","l t d","company",
            "corporations",
            "corps",
-           "corporation","corp","companies","incorporated","inc"] 
+           "corporation","corp","companies","incorporated","inc"]  #North america?
+#operations
+#of america?
 
 subs = {
     "assn" : "association",

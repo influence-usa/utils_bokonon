@@ -1,7 +1,7 @@
-from being import groupMerge, countTypes, matchTypeAndHasFields
+from being import  countTypes, groupMerge, matchTypeAndHasFields, windowMerge
 from load import loadData
 from pprint import pprint
-from save import steralize, save, project
+from save import project, steralize, save
 from text import extractNames
 
 def represent(v):
@@ -23,6 +23,13 @@ def main():
                matchTypeAndHasFields("client",["name"]),               
                lambda v: extractNames(v["name"]),
                description="Merged clients based on extracted and cleaned name match")
+
+    windowMerge(universe,
+               matchTypeAndHasFields("client",["name"]),               
+               lambda v: extractNames(v["name"]),
+                5,
+                1,
+               description="Merged clients based on windowed extracted name matchs")
     
     project(universe,"clientnames.txt", lambda v: v["type"] == "client", represent)
 

@@ -2,6 +2,7 @@ from collections import defaultdict
 import copy
 from networkx import nx
 import uuid
+from Levenshtein import distance
 
 being =      lambda : {"type": "Being"}
 represents = lambda : {"relation":"represents"}
@@ -63,7 +64,6 @@ def groupMerge(universe, pred, extract,description=None):
             d[s].append(k)
     for k,v in d.iteritems():
         merged = reduce(lambda x,y: mergeTheirBeings(universe,x,y),v)
-        found = findBeing(universe,merged)
         
     cullHermits(universe)
     if description != None:
@@ -73,7 +73,42 @@ def groupMerge(universe, pred, extract,description=None):
                 txt += k + " " + str(v-start[k]) + " "
             print(txt)
             print("")
-    
+
+def windowMerge(universe, pred, extract, windowSize, maxDistance, description=None):
+    if description != None:
+            print(description)        
+            start = countTypes(universe)
+
+    nodes = filter(lambda t: pred(t[1]),universe.nodes(data=True))
+    d = {}
+    for k,v in nodes:
+        for s in extract(v):
+            d[s] = k
+            
+    items = sorted(d.iteritems(),key=lambda x: x[0])
+    for i in range(0,len(items)-windowSize):
+        a = items[i]        
+        for j in range(1,windowSize+1):
+            b = items[i+j]
+            dQ = distance(a[0],b[0]) <= maxDistance
+            bQ = findBeing(universe,a[1]) != findBeing(universe,b[1])
+            lQ = len(a[0]) > 5 and len(b[0]) > 5 
+            if  dQ and bQ and lQ:
+                print(a[0])
+                print(b[0])
+                print("\n")
+                mergeTheirBeings(universe,a[1],b[1])
+                        
+    cullHermits(universe)
+    if description != None:
+            d = countTypes(universe)
+            txt = "" 
+            for k,v in d.iteritems():
+                txt += k + " " + str(v-start[k]) + " "
+            print(txt)
+            print("")
+
+            
 def matchTypeAndHasFields(t,fs):
     return lambda v: v["type"] == t and all([v[f] != "" for f in fs])
     
