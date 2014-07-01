@@ -82,12 +82,14 @@ def groupMerge(universe, pred,extract, description=None,logging=None):
             print(txt)
             print("")
 
-def windowMerge(universe, pred, extract, windowSize, maxDistance, description=None):
+def windowMerge(universe, selector, extract, windowSize, maxDistance,
+                pred = lambda x,y: True, description=None,logging=None):
+    
     if description != None:
             print(description)        
             start = countTypes(universe)
 
-    nodes = filter(lambda t: pred(t[1]),universe.nodes(data=True))
+    nodes = filter(lambda t: selector(t[1]),universe.nodes(data=True))
     d = {}
     for k,v in nodes:
         for s in extract(v):
@@ -100,11 +102,15 @@ def windowMerge(universe, pred, extract, windowSize, maxDistance, description=No
             b = items[i+j]
             dQ = distance(a[0],b[0]) <= maxDistance
             bQ = findBeing(universe,a[1]) != findBeing(universe,b[1])
-            lQ = len(a[0]) > 5 and len(b[0]) > 5 
-            if  dQ and bQ and lQ:
-                # print(a[0])
-                # print(b[0])
-                # print("\n")
+            lQ = len(a[0]) > 5 and len(b[0]) > 5
+
+            an = universe.node[a[1]]
+            bn = universe.node[b[1]]            
+            if  dQ and bQ and lQ and pred(an,bn):
+                if logging != None:
+                    print(logging(an))
+                    print(logging(bn))                    
+                    print("")
                 mergeTheirBeings(universe,a[1],b[1])
                         
     cullHermits(universe)
