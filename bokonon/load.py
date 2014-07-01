@@ -126,7 +126,7 @@ def loadData():
         print("Loading and processing files now")
         p = multiprocessing.Pool(8)
         data  = p.map(loadForm1,glob(os.environ["HOUSEXML"]+"/LD1/*/*/*.json"),10)
-        #data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)        
+#        data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)    
         
         print("Starting from {} records".format(len(data)))
         print("Building universe")

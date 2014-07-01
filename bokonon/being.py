@@ -1,8 +1,9 @@
 from collections import defaultdict
 import copy
-from networkx import nx
-import uuid
 from Levenshtein import distance
+from networkx import nx
+from pprint import pprint
+import uuid
 
 being =      lambda : {"type": "Being"}
 represents = lambda : {"relation":"represents"}
@@ -52,7 +53,7 @@ def countTypes(universe):
         d[universe.node[ns[0]]["type"]] += 1
     return d
             
-def groupMerge(universe, pred, extract,description=None):
+def groupMerge(universe, pred,extract, description=None,logging=None):    
     if description != None:
             print(description)        
             start = countTypes(universe)
@@ -62,9 +63,16 @@ def groupMerge(universe, pred, extract,description=None):
     for k,v in nodes:
         for s in extract(v):
             d[s].append(k)
-    for k,v in d.iteritems():
-        merged = reduce(lambda x,y: mergeTheirBeings(universe,x,y),v)
+    for k,vs in d.iteritems():
+        if logging != None:
+            bs = map(lambda x: findBeing(universe,x),vs)
+            if len(bs) > 1 and len(set(bs)) != 1:
+                for l in map(lambda x: logging(universe.node[x]),vs):
+                    print(l)
+                print("")
         
+        merged = reduce(lambda x,y: mergeTheirBeings(universe,x,y),vs)
+            
     cullHermits(universe)
     if description != None:
             d = countTypes(universe)
@@ -94,9 +102,9 @@ def windowMerge(universe, pred, extract, windowSize, maxDistance, description=No
             bQ = findBeing(universe,a[1]) != findBeing(universe,b[1])
             lQ = len(a[0]) > 5 and len(b[0]) > 5 
             if  dQ and bQ and lQ:
-                print(a[0])
-                print(b[0])
-                print("\n")
+                # print(a[0])
+                # print(b[0])
+                # print("\n")
                 mergeTheirBeings(universe,a[1],b[1])
                         
     cullHermits(universe)
