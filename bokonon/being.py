@@ -1,9 +1,18 @@
 from collections import defaultdict
 import copy
 from networkx import nx
+import uuid
 
-being  = {"label": "Being", "shape":"rectangle", "type": "Being"}
-represents = {"label":"represents", "relation":"represents"}
+being =      lambda : {"type": "Being"}
+represents = lambda : {"relation":"represents"}
+
+def addRecord(universe,record):
+    rid = str(uuid.uuid1())
+    bid = str(uuid.uuid1())    
+    universe.add_node(bid,being())
+    universe.add_node(rid,record)
+    universe.add_edge(rid,bid,represents())
+    return rid
 
 def findBeing(universe,l):
     beings = []
@@ -23,7 +32,7 @@ def mergeTheirBeings(universe,al,bl):
     b = findBeing(universe,bl)        
     if a != b:
         for v in nx.neighbors(universe,b):
-            universe.add_edge(v,a,copy.copy(represents))
+            universe.add_edge(v,a,represents())
             universe.remove_edge(v,b)
         av = universe.node[a]
         bv = universe.node[b]        

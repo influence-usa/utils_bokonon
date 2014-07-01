@@ -1,15 +1,14 @@
 import codecs
-import copy
 import json
 from glob   import glob
 import multiprocessing
 import networkx as nx
 import os
 import pickle
-import uuid
+
 
 from text import preProcess
-from being import being, represents
+from being import addRecord
 
 processed_files = 'processed_files'
 processed_graph = 'processed_graph'
@@ -127,9 +126,8 @@ def loadData():
         print("Loading and processing files now")
         p = multiprocessing.Pool(8)
         data  = p.map(loadForm1,glob(os.environ["HOUSEXML"]+"/LD1/*/*/*.json"),10)
-        data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)        
+        #data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)        
         
-
         print("Starting from {} records".format(len(data)))
         print("Building universe")
         for col in data:
@@ -138,21 +136,11 @@ def loadData():
             (client,firm,employs) = col
             if client["name"] == "":
                 continue
-        
-            cnode = str(uuid.uuid1())
-            fnode = str(uuid.uuid1())
-            cbeing = str(uuid.uuid1())
-            fbeing = str(uuid.uuid1())        
 
-            universe.add_node(cbeing,copy.copy(being))
-            universe.add_node(cnode,client)
-            universe.add_edge(cnode,cbeing,copy.copy(represents))
-        
-            universe.add_node(fbeing,copy.copy(being))
-            universe.add_node(fnode,firm)
-            universe.add_edge(fnode,fbeing,copy.copy(represents))
-        
-            universe.add_edge(fnode,cnode,employs)
+            cid = addRecord(universe,client)
+            fid = addRecord(universe,firm)        
+            universe.add_edge(fid,cid,employs)
+            
         print("Universe loaded and built, saving now")
         with open(processed_graph,"w") as f:
             pickle.dump(universe,f,2)
