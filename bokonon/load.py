@@ -12,6 +12,7 @@ from text import preProcess
 from being import being, represents
 
 processed_files = 'processed_files'
+processed_graph = 'processed_graph'
 
 def carefulDict(jOb,d,props):
     for k,kvs in props:
@@ -115,45 +116,44 @@ def loadForm1(x):
 def loadForm2(x):
     return loadForm(x,2)
 
-def loadData():
-    universe = nx.Graph()
-    data = None
-    if os.path.exists(processed_files):
-        print ("Processed files have been saved, reading those instead")
-        with open(processed_files,"r") as f:
-            data = pickle.load(f)
+def loadData():    
+    if os.path.exists(processed_graph):
+        print("Processed graph has been saved, reading that instead")
+        with open(processed_graph,"r") as f:
+            return pickle.load(f)
+        
     else:
+        universe = nx.Graph()    
         print("Loading and processing files now")
         p = multiprocessing.Pool(8)
         data  = p.map(loadForm1,glob(os.environ["HOUSEXML"]+"/LD1/*/*/*.json"),10)
         data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)        
         
-        print "Saving processed files"
-        with open(processed_files,"w") as f:
-            pickle.dump(data,f,2)
 
-    print("Starting from {} records".format(len(data)))
-    print("Building universe")
-    for col in data:
-        if col == None:
-            continue
-        (client,firm,employs) = col
-        if client["name"] == "":
-            continue
+        print("Starting from {} records".format(len(data)))
+        print("Building universe")
+        for col in data:
+            if col == None:
+                continue
+            (client,firm,employs) = col
+            if client["name"] == "":
+                continue
         
-        cnode = str(uuid.uuid1())
-        fnode = str(uuid.uuid1())
-        cbeing = str(uuid.uuid1())
-        fbeing = str(uuid.uuid1())        
+            cnode = str(uuid.uuid1())
+            fnode = str(uuid.uuid1())
+            cbeing = str(uuid.uuid1())
+            fbeing = str(uuid.uuid1())        
 
-        universe.add_node(cbeing,copy.copy(being))
-        universe.add_node(cnode,client)
-        universe.add_edge(cnode,cbeing,copy.copy(represents))
+            universe.add_node(cbeing,copy.copy(being))
+            universe.add_node(cnode,client)
+            universe.add_edge(cnode,cbeing,copy.copy(represents))
         
-        universe.add_node(fbeing,copy.copy(being))
-        universe.add_node(fnode,firm)
-        universe.add_edge(fnode,fbeing,copy.copy(represents))
+            universe.add_node(fbeing,copy.copy(being))
+            universe.add_node(fnode,firm)
+            universe.add_edge(fnode,fbeing,copy.copy(represents))
         
-        universe.add_edge(fnode,cnode,employs)
-    print("Universe loaded and built")        
-    return universe
+            universe.add_edge(fnode,cnode,employs)
+        print("Universe loaded and built, saving now")
+        with open(processed_graph,"w") as f:
+            pickle.dump(universe,f,2)
+        return universe
