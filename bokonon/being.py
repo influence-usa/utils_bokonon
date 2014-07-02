@@ -1,6 +1,6 @@
 from collections import defaultdict
 import copy
-from Levenshtein import distance
+from text import levenshtein
 from networkx import nx
 from pprint import pprint
 import uuid
@@ -53,25 +53,26 @@ def countTypes(universe):
         d[universe.node[ns[0]]["type"]] += 1
     return d
             
-def groupMerge(universe, pred,extract, description=None,logging=None):    
+def groupMerge(universe, selector,extract, description=None,logging=None):    
     if description != None:
             print(description)        
             start = countTypes(universe)
 
-    nodes = filter(lambda t: pred(t[1]),universe.nodes(data=True))
+    nodes = filter(lambda t: selector(t[1]),universe.nodes(data=True))
     d = defaultdict(list)
     for k,v in nodes:
-        for s in extract(v):
-            d[s].append(k)
+        for s in extract(k,v):
+            d[s].append((k,v))
     for k,vs in d.iteritems():
         if logging != None:
             bs = map(lambda x: findBeing(universe,x),vs)
             if len(bs) > 1 and len(set(bs)) != 1:
-                for l in map(lambda x: logging(universe.node[x]),vs):
+                for l in map(lambda x: logging(x,universe.node[x]),vs):
                     print(l)
                 print("")
-        
-        merged = reduce(lambda x,y: mergeTheirBeings(universe,x,y),vs)
+
+        toMerge = map(lambda x: x[0], vs)
+        merged = reduce(lambda x,y: mergeTheirBeings(universe,x,y),toMerge)
             
     cullHermits(universe)
     if description != None:
@@ -100,7 +101,7 @@ def windowMerge(universe, selector, extract, windowSize, maxDistance,
         a = items[i]        
         for j in range(1,windowSize+1):
             b = items[i+j]
-            dQ = distance(a[0],b[0]) <= maxDistance
+            dQ = levenshtein(a[0],b[0]) <= maxDistance
             bQ = findBeing(universe,a[1]) != findBeing(universe,b[1])
             lQ = len(a[0]) > 5 and len(b[0]) > 5
 
@@ -108,8 +109,8 @@ def windowMerge(universe, selector, extract, windowSize, maxDistance,
             bn = universe.node[b[1]]            
             if  dQ and bQ and lQ and pred(an,bn):
                 if logging != None:
-                    print(logging(an))
-                    print(logging(bn))                    
+                    print(logging(a[1],an))
+                    print(logging(b[1],bn))                    
                     print("")
                 mergeTheirBeings(universe,a[1],b[1])
                         

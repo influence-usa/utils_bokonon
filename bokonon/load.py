@@ -43,6 +43,7 @@ def loadForm(f,t):
     jOb = {}
     fo = codecs.open(f,"r",encoding="utf-8")
     jOb = json.loads(fo.read())
+    fo.close()
     if corruption+u'LOBBYINGDISCLOSURE{}'.format(t) in jOb:
         jOb = clean(jOb)
 
@@ -107,7 +108,18 @@ def loadForm(f,t):
         "houseID":     preProcess(jOb["houseID"]),
         "senate":      preProcess(jOb["senateID"]),
     }
-    return (client, firm, employs)
+    lobbyists = []
+    if "lobbyists" in jOb:
+        for l in jOb["lobbyists"]:
+            if "lobbyistFirstName" in l and l["lobbyistFirstName"] != "":
+                lobbyists.append({"firstname": l["lobbyistFirstName"],
+                                  "lastname":  l["lobbyistLastName"],
+                                  "suffix":    l["lobbyistSuffix"],
+                                  "position":  l["coveredPosition"],
+                                  "type": "lobbyist",
+                                  "filename":  f})
+
+    return (client, firm, employs, lobbyists)
 
 def loadForm1(x):
     return loadForm(x,1)
@@ -125,21 +137,24 @@ def loadData():
         universe = nx.Graph()    
         print("Loading and processing files now")
         p = multiprocessing.Pool(8)
-        data  = p.map(loadForm1,glob(os.environ["HOUSEXML"]+"/LD1/*/*/*.json"),10)
-#        data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"),10)    
+        data  = p.map(loadForm1,glob(os.environ["HOUSEXML"]+"/LD1/*/*/*.json"))
+        data += p.map(loadForm2,glob(os.environ["HOUSEXML"]+"/LD2/*/*/*.json"))    
         
         print("Starting from {} records".format(len(data)))
         print("Building universe")
         for col in data:
             if col == None:
                 continue
-            (client,firm,employs) = col
+            (client,firm,employs,lobbyists) = col
             if client["name"] == "":
                 continue
 
             cid = addRecord(universe,client)
-            fid = addRecord(universe,firm)        
+            fid = addRecord(universe,firm)
             universe.add_edge(fid,cid,employs)
+            for l in lobbyists:
+                lid = addRecord(universe,l)
+                universe.add_edge(lid,fid,{"relation":"workedfor"})
             
         print("Universe loaded and built, saving now")
         with open(processed_graph,"w") as f:

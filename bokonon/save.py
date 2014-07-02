@@ -27,7 +27,7 @@ def project(universe,fo,pred,extract):
     for b in beings:
         ns = nx.neighbors(universe,b[0])
         if pred(universe.node[ns[0]]):
-            fs = list(set(map(lambda x: extract(universe.node[x]), ns)))
+            fs = list(set(map(lambda x: extract(x,universe.node[x]), ns)))
             fs = sorted(fs)
             lst.append(fs)
 
