@@ -84,11 +84,10 @@ def parseName(name):
         print "Cannot parse:",name
 
 def parseNames(names):
-    dict = collections.defaultdict(set)
-    names = filter(None,map(parseName,names))
+    d = collections.defaultdict(set)
     for name in names:
-        dict[parseName(name)].add(name)
-    return dict
+        d[parseName(name)].add(name)
+    return d
 
 def saveDict(output,d):
     print("Saving names")
