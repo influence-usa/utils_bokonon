@@ -4,3 +4,4 @@ output/*
 processed_*
 *.txt
 
+alias.json
