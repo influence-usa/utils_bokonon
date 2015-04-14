@@ -1,0 +1,22 @@
+name   = whitespace* token (whitespace+ token)* 
+token  = special / simple
+simple  = !(special) r'[a-z0-9&!/]+'  
+whitespace = ' ' / ',' / '#' / '-' / '`' / '.' / '\'' / '*' / '$' / '(' / ')' / '@' / '?'
+special = &(specialHelper whitespace) specialHelper
+specialHelper = and / corporates
+and = "&" / "and" 
+
+corporates = llc / pllc / llp / lp / lpa / corporation / limited / company / international / association / foreign 
+association = "association" / "assn." / "associations" / "association's" / "associations'"
+national = "national" / "nat'l"
+international = "international"
+llc  = "llc" / "lc" / "lcc" / "llc." / "l.l.c" / "l.l.c."
+pllc = "pllc" / "p.l.l.c" / "p.l.l.c."
+llp  = "llp" / "llp." / "lllp" / "llpp"
+lp =   "lp" / "lp." / "l.p."
+lpa = "lpa" / "l.p.a." / "l.p.a"
+corporation = "corps" / "corporations" / "corporation" / "corp" / "corp." / "incorporated" / "inc" / "inc." / "inc ." / "in.c"
+limited = "ltd" / "ltd." / "ltd.."
+company = "company" / "companies" / "co." / "co"
+foreign = "ltda." 
+
