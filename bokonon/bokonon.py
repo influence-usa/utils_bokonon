@@ -4,7 +4,7 @@ import collections
 import re
 import json
 from arpeggio.cleanpeg import ParserPEG
-from arpeggio import *
+from arpeggio import PTNodeVisitor, visit_parse_tree
 import sys 
 
 def loadNames(filename):
@@ -27,47 +27,60 @@ def clean(s):
     s = s.strip().lower()
     return s
 
-#print test.parse("zack llc")
-
-parser = ParserPEG(open("parser.peg","r").read(),"name",skipws=False)
+parser = ParserPEG(open("parser.peg","r").read(),"parse",skipws=False)
 
 class Visitor(PTNodeVisitor):
+    def visit_parse(self,node,children):
+        return children
+    
+    def visit_splitter(self,node,children):
+        return children
+
+    def visit_fka(self,node,children):
+        return children
+    def visit_abbrevFka(self,node,children):
+        return ("FKA",node.value)
+    def visit_aka(self,node,children):
+        return ("AKA",node.value)
+    def visit_obo(self,node,children):
+        return ("OBO",node.value)
+
     def visit_name(self,node,children):
         return children
-    def visit_token(self,node,children):
+    def visit_namePart(self,node,children):
         return children[0]
     def visit_simple(self,node,children):
-        return node.value
+        return ("SIMPLE",node.value)
     def visit_special(self,node,children):
         return children[0]
     def visit_specialHelper(self,node,children):
         return children[0]
     def visit_corporates(self,node,children):
-        return ""
+        return children[0]
     def visit_llc(self,node,children):
-        return "LLC"
+        return ("LLC",node.value)
     def visit_and(self,node,children):
-        return "AND"
+        return ("AND",node.value)
     def visit_association(self,node,children):
-        return "ASSOCIATION"
+        return ("ASSOCIATION",node.value)
     def visit_national(self,node,children):
-        return "NATIONAL"
+        return ("NATIONAL",node.value)
     def visit_pllc(self,node,children):
-        return "PLLC"
+        return ("PLLC",node.value)
     def visit_llp(self,node,children):
-        return "LLP"
+        return ("LLP",node.value)
     def visit_lp(self,node,children):
-        return "LP"
+        return ("LP",node.value)
     def visit_lpa(self,node,children):
-        return "LPA"
+        return ("LPA",node.value)
     def visit_corporation(self,node,children):
-        return "CORPORATION"
+        return ("CORPORATION",node.value)
     def visit_limited(self,node,children):
-        return "LIMITED"
+        return ("LIMITED",node.value)
     def visit_company(self,node,children):
-        return "COMPANY"
+        return ("COMPANY",node.value)
     def visit_international(self,node,children):
-        return "INTERNATIONAL"
+        return ("INTERNATIONAL",node.value)
 
 def parseName(name):
     try:
@@ -78,8 +91,8 @@ def parseName(name):
         # hits. By putting a single whitespace at the
         # end of the name, parsing will complete and
         # still be accurate.
-        canonical = visit_parse_tree(tree, Visitor(defaults=False))
-        return " ".join(canonical).strip()
+        canonical = visit_parse_tree(tree, Visitor(defaults=False,debug=True))
+        return canonical
     except Exception:
         print "Cannot parse:",name
 
@@ -99,8 +112,8 @@ def saveDict(output,d):
 
 if __name__ == "__main__":
     print sys.argv
-    input,output = sys.argv[1:3] 
-    names = loadNames(input)
-    print(len(names))
-    parsedNames = parseNames(names)
-    saveDict(output,parsedNames)
+    inpt,outpt = sys.argv[1:3] 
+    inames = loadNames(inpt)
+    print(len(inames))
+    parsedNames = parseNames(inames)
+    saveDict(outpt,parsedNames)
