@@ -13,7 +13,7 @@ def loadNames(filename):
         names = set()
         print("Reading CSV")
         for row in reader:
-        #for row in it.islice(reader,1,10000):
+        #for row in it.islice(reader,1,100):
             names.add(row["name"])
         return names
 
@@ -35,10 +35,15 @@ class Visitor(PTNodeVisitor):
     
     def visit_splitter(self,node,children):
         return children
-
+    def visit_splitterHelper(self,node,children):
+        return children[0]
     def visit_fka(self,node,children):
-        return children
+        return children[0]
     def visit_abbrevFka(self,node,children):
+        return ("FKA",node.value)
+    def visit_complexFka(self,node,children):
+        return ("FKA",node.value)
+    def visit_simpleFka(self,node,children):
         return ("FKA",node.value)
     def visit_aka(self,node,children):
         return ("AKA",node.value)
@@ -82,6 +87,23 @@ class Visitor(PTNodeVisitor):
     def visit_international(self,node,children):
         return ("INTERNATIONAL",node.value)
 
+def collectTokens(seq):
+    ob = {"tag" : None}
+    col = []
+    for i in range(0,len(seq)):
+        s = seq[i]
+        if s[0][0]in ["FKA","OBO","AKA"]:
+            ob["tag"] = s[0]
+            ob["first"] = col
+            ob["second"] = collectTokens(seq[(i+1):])
+            break
+        else:
+            col.append(s)
+    if ob["tag"] == None:
+        ob["tag"] = "name"
+        ob["first"] = col
+    return ob
+
 def parseName(name):
     try:
         name = clean(name)
@@ -91,8 +113,8 @@ def parseName(name):
         # hits. By putting a single whitespace at the
         # end of the name, parsing will complete and
         # still be accurate.
-        canonical = visit_parse_tree(tree, Visitor(defaults=False,debug=True))
-        return canonical
+        parsedSeq = visit_parse_tree(tree, Visitor(defaults=False,debug=True))
+        return parsedSeq
     except Exception:
         print "Cannot parse:",name
 
@@ -110,10 +132,34 @@ def saveDict(output,d):
         f.write(json.dumps(d,sort_keys=True,indent=4, separators=(',', ': ')))
         f.close()
 
-if __name__ == "__main__":
-    print sys.argv
+def aliasTable():
     inpt,outpt = sys.argv[1:3] 
     inames = loadNames(inpt)
-    print(len(inames))
     parsedNames = parseNames(inames)
     saveDict(outpt,parsedNames)
+    print sys.argv
+
+def questionable(name):
+    tree = parser.parse(clean(name)+" ")
+    seq = visit_parse_tree(tree,Visitor(defaults=False))
+    tags = map(lambda x: x[0][0],seq)
+    aka = any(map(lambda x: x == "AKA",tags))
+    fka = any(map(lambda x: x == "FKA", tags))
+    obo = any(map(lambda x: x == "OBO", tags))
+    return sum([aka,fka,obo]) > 1 
+    
+def search():
+    for i in loadNames(sys.argv[1]):
+        if i == '':
+            continue
+        try:
+            if questionable(i):
+                print i
+        except Exception:
+            print "Cannot question: "+i
+
+def collectedName(name):
+    return collectTokens(parseName(name))
+
+if __name__ == "__main__":
+    search()
