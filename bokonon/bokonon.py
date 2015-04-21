@@ -20,14 +20,9 @@ def loadNames(filename):
 def clean(s):
     s = s.strip().lower()
     s = re.sub('  ',' ',s)
-    s = re.sub('#fedex ab#.*','fedexab',s)
-    s = re.sub('\(amex\)','',s)
-    s = re.sub('#fedex kinko\'s #.*','fedexkinko',s)
-    s = re.sub('  ',' ',s)
-    s = s.strip().lower()
     return s
 
-parser = ParserPEG(open("parser.peg","r").read(),"parse",skipws=False)
+parser = ParserPEG(open("parser.peg","r").read(),"parse",skipws=False,ignore_case=True)
 
 class Visitor(PTNodeVisitor):
     def visit_parse(self,node,children):
@@ -139,27 +134,8 @@ def aliasTable():
     saveDict(outpt,parsedNames)
     print sys.argv
 
-def questionable(name):
-    tree = parser.parse(clean(name)+" ")
-    seq = visit_parse_tree(tree,Visitor(defaults=False))
-    tags = map(lambda x: x[0][0],seq)
-    aka = any(map(lambda x: x == "AKA",tags))
-    fka = any(map(lambda x: x == "FKA", tags))
-    obo = any(map(lambda x: x == "OBO", tags))
-    return sum([aka,fka,obo]) > 1 
-    
-def search():
-    for i in loadNames(sys.argv[1]):
-        if i == '':
-            continue
-        try:
-            if questionable(i):
-                print i
-        except Exception:
-            print "Cannot question: "+i
-
 def collectedName(name):
     return collectTokens(parseName(name))
 
 if __name__ == "__main__":
-    search()
+    aliasTable()
