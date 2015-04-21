@@ -3,36 +3,19 @@ parse = whitespace? name (whitespace+ splitter whitespace+ name)* whitespace?
 whitespace = whites+
 whites = ' ' / ',' / '#' / '-' / '`' / '.' / '\'' / '*' / '$' / '(' / ')' / '@' / '?'
 
-name = namePart (whitespace+ namePart)* 
-namePart = special / simple
+name = simple (whitespace+ simple)* 
 
-simple  = !(special / splitter) r'[a-z0-9&!/]+'  
-special = &(specialHelper whitespace) specialHelper
-specialHelper = and / corporates
-and = "&" / "and" 
-corporates = llc / pllc / llp / lp / lpa / corporation / limited / company / international / association / foreign 
-association = "association" / "assn." / "associations" / "association's" / "associations'"
-national = "national" / "nat'l"
-international = "international"
-llc  = "llc" / "lc" / "lcc" / "llc." / "l.l.c" / "l.l.c."
-pllc = "pllc" / "p.l.l.c" / "p.l.l.c."
-llp  = "llp" / "llp." / "lllp" / "llpp"
-lp =   "lp" / "lp." / "l.p."
-lpa = "lpa" / "l.p.a." / "l.p.a"
-corporation = "corps" / "corporations" / "corporation" / "corp" / "corp." / "incorporated" / "inc" / "inc." / "inc ." / "in.c"
-limited = "ltd" / "ltd." / "ltd.."
-company = "company" / "companies" / "co." / "co"
-foreign = "ltda." 
-
+simple  = !(splitter) r'[a-z0-9&]+'  
 
 splitter = &(splitterHelper whitespace) splitterHelper
 splitterHelper = fka / aka / obo
 fka = abbrevFka / simpleFka / complexFka
 abbrevFka = 'fka' / 'f.k.a.' / 'f/k/a/' / 'f/k/a' / 'f.k.a'
 simpleFka = !complexFka formers
-complexFka = formers whitespace verbs (whitespace "as")?
+complexFka = formers whitespace verbs (whitespace optional)?
 formers = "formerly" / "formelry" / "formarly" / "frmly" / "frly" / "previously" / "prev."
 verbs = "registered" / "filed" / "reported" / "known" / "know" / "field" / "reporting" / "filing" / "knows"
+optional = "as" 
 aka = "a/k/a" / "a.k.a." / "also known as" / "aka"
 obo = "on behalf of" / "o.b.o" / "obo"
 

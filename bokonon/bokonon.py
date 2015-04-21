@@ -17,11 +17,6 @@ def loadNames(filename):
             names.add(row["name"])
         return names
 
-def clean(s):
-    s = s.strip().lower()
-    s = re.sub('  ',' ',s)
-    return s
-
 parser = ParserPEG(open("parser.peg","r").read(),"parse",skipws=False,ignore_case=True)
 
 class Visitor(PTNodeVisitor):
@@ -29,15 +24,24 @@ class Visitor(PTNodeVisitor):
         return children
     
     def visit_splitter(self,node,children):
-        return children
+        return children[0]
     def visit_splitterHelper(self,node,children):
         return children[0]
     def visit_fka(self,node,children):
         return children[0]
     def visit_abbrevFka(self,node,children):
         return ("FKA",node.value)
+
     def visit_complexFka(self,node,children):
-        return ("FKA",node.value)
+        print node,children
+        return ("FKA","".join(children))
+    def visit_formers(self,node,children):
+        return node.value
+    def visit_verbs(self,node,chidlren):
+        return node.value
+    def visit_optional(self,node,children):
+        return node.value
+    
     def visit_simpleFka(self,node,children):
         return ("FKA",node.value)
     def visit_aka(self,node,children):
@@ -46,96 +50,35 @@ class Visitor(PTNodeVisitor):
         return ("OBO",node.value)
 
     def visit_name(self,node,children):
-        return children
-    def visit_namePart(self,node,children):
-        return children[0]
+        return "".join(children)
+    def visit_whitespace(self,node,children):
+        return "".join(children)
+    def visit_whites(self,node,children):
+        return node.value
     def visit_simple(self,node,children):
-        return ("SIMPLE",node.value)
-    def visit_special(self,node,children):
-        return children[0]
-    def visit_specialHelper(self,node,children):
-        return children[0]
-    def visit_corporates(self,node,children):
-        return children[0]
-    def visit_llc(self,node,children):
-        return ("LLC",node.value)
-    def visit_and(self,node,children):
-        return ("AND",node.value)
-    def visit_association(self,node,children):
-        return ("ASSOCIATION",node.value)
-    def visit_national(self,node,children):
-        return ("NATIONAL",node.value)
-    def visit_pllc(self,node,children):
-        return ("PLLC",node.value)
-    def visit_llp(self,node,children):
-        return ("LLP",node.value)
-    def visit_lp(self,node,children):
-        return ("LP",node.value)
-    def visit_lpa(self,node,children):
-        return ("LPA",node.value)
-    def visit_corporation(self,node,children):
-        return ("CORPORATION",node.value)
-    def visit_limited(self,node,children):
-        return ("LIMITED",node.value)
-    def visit_company(self,node,children):
-        return ("COMPANY",node.value)
-    def visit_international(self,node,children):
-        return ("INTERNATIONAL",node.value)
-
-def collectTokens(seq):
-    ob = {"tag" : None}
-    col = []
-    for i in range(0,len(seq)):
-        s = seq[i]
-        if s[0][0]in ["FKA","OBO","AKA"]:
-            ob["tag"] = s[0]
-            ob["first"] = col
-            ob["second"] = collectTokens(seq[(i+1):])
-            break
-        else:
-            col.append(s)
-    if ob["tag"] == None:
-        ob["tag"] = "name"
-        ob["first"] = col
-    return ob
+        return node.value
 
 def parseName(name):
-    try:
-        name = clean(name)
-        tree = parser.parse(name+" ")
-        # HACK CLUDGE: Using EOF as whitespace in a PEG
-        # seems to cause a infinite loop of cache
-        # hits. By putting a single whitespace at the
-        # end of the name, parsing will complete and
-        # still be accurate.
-        parsedSeq = visit_parse_tree(tree, Visitor(defaults=False,debug=True))
-        return parsedSeq
-    except Exception:
-        print "Cannot parse:",name
-
-def parseNames(names):
-    d = collections.defaultdict(set)
-    for name in names:
-        d[parseName(name)].add(name)
-    return d
-
-def saveDict(output,d):
-    print("Saving names")
-    for k,v in d.items():
-        d[k] = list(v)
-    with open(output,'w') as f:
-        f.write(json.dumps(d,sort_keys=True,indent=4, separators=(',', ': ')))
-        f.close()
-
-def aliasTable():
-    inpt,outpt = sys.argv[1:3] 
-    inames = loadNames(inpt)
-    parsedNames = parseNames(inames)
-    saveDict(outpt,parsedNames)
-    print sys.argv
-
-def collectedName(name):
-    return collectTokens(parseName(name))
-
-if __name__ == "__main__":
-    aliasTable()
+    tree = parser.parse(name)
+    tokens = visit_parse_tree(tree, Visitor(defaults=False,debug=False))
+    tag = None
+    names = []
+    i = ""
+    print tokens
+    for token in tokens:
+        if isinstance(token,unicode):
+            i += token
+        else:
+            tag = token
+            names.append(i)
+            i = ""
+    names.append(i)
+    if tag != None:
+        k = tag[0].lower()+"_name"
+        return {"name": names[0],
+                k: names[1],
+                "tag": tag[0],
+                "value": tag[1]}
+    else:
+        return {"name": names[0],
+                "tag": "simple"}
